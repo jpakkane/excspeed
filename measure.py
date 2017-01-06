@@ -19,8 +19,15 @@ import generate
 import subprocess
 import os, shutil
 
+def sizeprint(fname):
+    unstripsize = os.stat(fname).st_size
+    subprocess.check_call(['strip', fname])
+    stripsize = os.stat(fname).st_size
+    print('Unstripped:', unstripsize)
+    print('Stripped:', stripsize)
+
 if __name__ == '__main__':
-    g = generate.GenerateCode()
+    g = generate.GenerateCode(1000, 10000)
     g.run()
     if os.path.exists('buildc'):
         shutil.rmtree('buildc')
@@ -34,3 +41,7 @@ if __name__ == '__main__':
     subprocess.check_call(['time', 'buildc/cprog'])
     print('C++')
     subprocess.check_call(['time', 'buildcpp/cppprog'])
+    print('\nC binary size')
+    sizeprint('buildc/cprog')
+    print('\nC++ binary size')
+    sizeprint('buildcpp/cppprog')

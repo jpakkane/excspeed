@@ -19,10 +19,10 @@ import os, shutil
 
 class GenerateCode:
 
-    def __init__(self):
+    def __init__(self, max_func, num_rounds):
         self.error_perc = 1
-        self.max_func = 1000
-        self.num_rounds = 1000
+        self.max_func = max_func
+        self.num_rounds = num_rounds
         self.init_cpp()
         self.init_c()
 
@@ -91,11 +91,23 @@ int func%d() {
         self.c_main = '''#include<stdio.h>
 #include<stdlib.h>
 #include<funcs.h>
+#include<string.h>
+
+struct Error* create_error(const char *msg) {
+    struct Error *e = malloc(sizeof(struct Error));
+    e->msg = strdup(msg);
+    return e;
+}
+
+void free_error(struct Error *err) {
+    free(err->msg);
+    free(err);
+}
 
 int main(int argc, char **argv) {
     int ok = 0;
     int fail = 0;
-    char *error = NULL;
+    struct Error *error = NULL;
     srandom(42); // Must be deterministic and the same for C and C++
     const int rounds = %d;
     for(int i=0; i<rounds; i++) {
@@ -103,7 +115,7 @@ int main(int argc, char **argv) {
         res = func0(&error);
         if(error) {
             fail++;
-            free(error);
+            free_error(error);
             error = NULL;
         } else {
             ok += res;
@@ -113,11 +125,11 @@ int main(int argc, char **argv) {
     return 0;
 }
 ''' % self.num_rounds
-        self.c_header_templ = 'int func%d(char **error);\n'
+        self.c_header_templ = 'int func%d(struct Error **error);\n'
         self.c_templ = '''#include<stdlib.h>
 #include<funcs.h>
 
-int func%d(char **error) {
+int func%d(struct Error **error) {
     int num = random() %% 5;
     int res;
     if(num == 0) {
@@ -142,10 +154,10 @@ int func%d(char **error) {
 #include<stdlib.h>
 #include<funcs.h>
 
-int func%d(char **error) {
+int func%d(struct Error **error) {
     int x = random() %% 100;
     if(x<%d) {
-        *error = strdup("Error");
+        *error = create_error("Error");
         return -1;
     }
     return 1;
@@ -215,8 +227,15 @@ executable('cppprog', 'main.cpp',
         open(fname, 'w').write(bottom_code)
         with open(self.c_h, 'w') as ofile:
             ofile.write('#pragma once\n')
+            ofile.write('''struct Error {
+    char *msg;
+};
+struct Error* create_error(const char *msg);
+
+void free_error(struct Error *err);
+''')
             for i in range(self.max_func+1):
-                ofile.write('int func%d(char **error);\n' % i)
+                ofile.write('int func%d(struct Error **error);\n' % i)
         with open(self.c_meson, 'w') as ofile:
             ofile.write('''project('exceptionspeed', 'c', default_options : ['buildtype=debugoptimized'])
 
