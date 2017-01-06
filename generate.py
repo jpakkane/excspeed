@@ -202,7 +202,8 @@ int func%d(struct Error **error) {
             for i in range(self.max_func+1):
                 ofile.write('int func%d();\n' % i)
         with open(self.cpp_meson, 'w') as ofile:
-            ofile.write('''project('exceptionspeed', 'cpp', default_options : ['buildtype=debugoptimized'])
+            ofile.write('''project('exceptionspeed', 'cpp',
+    default_options : ['buildtype=debugoptimized', 'cpp_std=c++14'])
 
 executable('cppprog', 'main.cpp',
 ''')
@@ -237,7 +238,8 @@ void free_error(struct Error *err);
             for i in range(self.max_func+1):
                 ofile.write('int func%d(struct Error **error);\n' % i)
         with open(self.c_meson, 'w') as ofile:
-            ofile.write('''project('exceptionspeed', 'c', default_options : ['buildtype=debugoptimized'])
+            ofile.write('''project('exceptionspeed', 'c',
+    default_options : ['buildtype=debugoptimized', 'c_std=gnu99'])
 
 executable('cprog', 'main.c',
 ''')
