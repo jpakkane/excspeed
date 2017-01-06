@@ -6,3 +6,5 @@
 /build*
 /cpp
 /plainc
+__pycache__
+

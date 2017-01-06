@@ -15,7 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import os, sys, shutil
+import os, shutil
 
 class GenerateCode:
 
@@ -131,9 +131,10 @@ int func%d(char **error) {
     } else {
         res = func%d(error);
     }
-    if(error) {
+    if(*error) {
         return -1;
     }
+
     return res;
 }
 '''
