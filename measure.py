@@ -31,7 +31,7 @@ def sizeprint(fname):
 class Measure:
     def __init__(self):
         self.depths = (50, 100, 150, 200, 250, 300, 350, 400, 450, 500)
-        self.errorrates = (0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50)
+        self.errorrates = (0, 1, 2, 3, 4, 5, 6, 7, 8, 9)
         self.num_measurements = 5
 
     def run(self):
