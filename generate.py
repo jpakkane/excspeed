@@ -19,8 +19,8 @@ import os, shutil
 
 class GenerateCode:
 
-    def __init__(self, max_func, num_rounds):
-        self.error_perc = 1
+    def __init__(self, max_func, num_rounds, error_perc):
+        self.error_perc = error_perc
         self.max_func = max_func
         self.num_rounds = num_rounds
         self.init_cpp()

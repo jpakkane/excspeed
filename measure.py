@@ -18,6 +18,8 @@
 import generate
 import subprocess
 import os, shutil
+import time
+import math
 
 def sizeprint(fname):
     unstripsize = os.stat(fname).st_size
@@ -26,8 +28,59 @@ def sizeprint(fname):
     print('Unstripped:', unstripsize)
     print('Stripped:', stripsize)
 
-if __name__ == '__main__':
-    g = generate.GenerateCode(1000, 10000)
+class Measure:
+    def __init__(self):
+        self.depths = (50, 100, 150, 200, 250, 300, 350, 400, 450, 500)
+        self.errorrates = (0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50)
+        self.num_measurements = 5
+
+    def run(self):
+        results = []
+        for depth in self.depths:
+            currow = ''
+            for errorrate in self.errorrates:
+                w = self.measure(depth, errorrate)
+                currow += w
+            results.append(currow)
+        return results
+
+    def time_command(self, command):
+        times = []
+        for _ in range(self.num_measurements):
+            starttime = time.time()
+            subprocess.check_call(command)
+            endtime = time.time()
+            times.append(endtime - starttime)
+        return min(times)
+
+    def measure(self, depth, errorrate):
+        g = generate.GenerateCode(depth, 100000, errorrate)
+        g.run()
+        if os.path.exists('buildc'):
+            shutil.rmtree('buildc')
+        if os.path.exists('buildcpp'):
+            shutil.rmtree('buildcpp')
+        mesonexe = shutil.which('meson')
+        if mesonexe is None:
+            mesonexe = shutil.which('meson.py')
+        if mesonexe is None:
+            mesonexe = '../meson/meson.py'
+        subprocess.check_call([mesonexe, 'buildc', g.cdir])
+        subprocess.check_call([mesonexe, 'buildcpp', g.cppdir])
+        subprocess.check_call(['ninja', '-C', 'buildc'])
+        subprocess.check_call(['ninja', '-C', 'buildcpp'])
+        ctime = self.time_command(['buildc/cprog'])
+        cpptime = self.time_command(['buildcpp/cppprog'])
+        if ctime < cpptime:
+            result = 'C'
+        else:
+            result = 'E'
+        if math.fabs(ctime-cpptime)/min(ctime, cpptime) < 0.1:
+            return result.lower()
+        return result
+
+def simple_measure():
+    g = generate.GenerateCode(1000, 100000, 5)
     g.run()
     if os.path.exists('buildc'):
         shutil.rmtree('buildc')
@@ -35,13 +88,21 @@ if __name__ == '__main__':
         shutil.rmtree('buildcpp')
     subprocess.check_call(['../meson/meson.py', 'buildc', g.cdir])
     subprocess.check_call(['../meson/meson.py', 'buildcpp', g.cppdir])
-    subprocess.check_call(['ninja', '-C', 'buildc'])
-    subprocess.check_call(['ninja', '-C', 'buildcpp'])
     print('Plain C')
-    subprocess.check_call(['time', 'buildc/cprog'])
+    subprocess.check_call(['ninja', '-C', 'buildc'])
     print('C++')
-    subprocess.check_call(['time', 'buildcpp/cppprog'])
+    subprocess.check_call(['ninja', '-C', 'buildcpp'])
     print('\nC binary size')
-    sizeprint('buildc/cprog')
+    subprocess.check_call(['time', 'buildc/cprog'])
     print('\nC++ binary size')
-    sizeprint('buildcpp/cppprog')
+    subprocess.check_call(['time', 'buildcpp/cppprog'])
+
+def matrix_measure():
+    m = Measure()
+    mat = m.run()
+    for line in mat:
+        print(line)
+
+if __name__ == '__main__':
+    #simple_measure()
+    matrix_measure()
