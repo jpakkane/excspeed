@@ -7,3 +7,7 @@ To run the tests:
 
  - edit `measure.py` to have the parameters you want
  - run `./measure.py`
+
+## Measurements
+
+Available in [this blog post](http://nibblestew.blogspot.com/2017/01/measuring-execution-performance-of-c.html).
