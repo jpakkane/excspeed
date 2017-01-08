@@ -143,6 +143,11 @@ int func%d(struct Error **error) {
     } else {
         res = func%d(error);
     }
+    /* This is a no-op in this specific code but is here to simulate
+     * real code that would check the error and based on that
+     * do something. It is vital we have a branch on the error condition,
+     * because that is what real world code would have as well.
+     */
     if(*error) {
         return -1;
     }
