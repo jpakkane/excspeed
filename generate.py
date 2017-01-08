@@ -253,5 +253,5 @@ executable('cprog', 'main.c',
             ofile.write(')\n')
 
 if __name__ == '__main__':
-    g = GenerateCode()
+    g = GenerateCode(100, 10000, 1)
     g.run()
